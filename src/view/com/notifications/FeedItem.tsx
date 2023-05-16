@@ -7,7 +7,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native'
-import {AppBskyEmbedImages} from '@atproto/api'
+import {AppBskyEmbedImages, AppBskyEmbedRecord, AppBskyEmbedRecordWithMedia, Entity} from '@atproto/api'
 import {AtUri} from '@atproto/api'
 import {
   FontAwesomeIcon,
@@ -114,6 +114,24 @@ export const FeedItem = observer(function ({
     return <View />
   }
 
+  const isDirectMention = item.isMention;
+
+  const isDirectReply = item.isReply && useMemo(() => {
+    const parentUri = item.additionalPost?.thread?.parentUri;
+    return parentUri != undefined && new AtUri(parentUri).host == store.me.did;
+  }, [item]);
+
+  const isDirectQuote = item.isQuote && useMemo(() => {
+    const embed = item.additionalPost?.thread?.post.embed;
+    if (AppBskyEmbedRecord.isView(embed)) {
+      const embedRecord = embed.record;
+      if (AppBskyEmbedRecord.isViewRecord(embedRecord)) {
+        return embedRecord.author.did == store.me.did;
+      }
+    }
+    return false;
+  }, [item]);
+
   if (item.isReply || item.isMention || item.isQuote) {
     if (item.additionalPost?.error) {
       // hide errors - it doesnt help the user to show them
@@ -130,12 +148,17 @@ export const FeedItem = observer(function ({
           uri={item.uri}
           initView={item.additionalPost}
           style={
-            item.isRead
-              ? undefined
-              : {
-                  backgroundColor: pal.colors.unreadNotifBg,
-                  borderColor: pal.colors.unreadNotifBorder,
-                }
+            isDirectMention || isDirectReply || isDirectQuote
+              ? {
+                backgroundColor: pal.colors.directNotifBg,
+                borderColor: pal.colors.directNotifBorder,
+              }
+              : item.isRead
+                ? undefined
+                : {
+                    backgroundColor: pal.colors.unreadNotifBg,
+                    borderColor: pal.colors.unreadNotifBorder,
+                  }
           }
         />
       </Link>
