@@ -116,7 +116,7 @@ export const FeedItem = observer(function ({
 
   const isDirectReply = item.isReply && useMemo(() => {
     const parentUri = item.additionalPost?.thread?.parentUri;
-    return parentUri != undefined && new AtUri(parentUri).host == store.me.did;
+    return parentUri && new AtUri(parentUri).host == store.me.did;
   }, [item]);
 
   if (item.isReply || item.isMention || item.isQuote) {
